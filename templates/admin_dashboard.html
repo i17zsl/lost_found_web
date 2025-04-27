@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="{{ language }}" dir="{{ 'rtl' if language == 'ar' else 'ltr' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ 'مفقوداتي - لوحة تحكم الأدمن' if language == 'ar' else 'Mfaqodati - Admin Dashboard' }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f1e9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .navbar { background-color: #2e6048; position: relative; }
+    .navbar-brand { font-size: 24px; font-weight: bold; color: #fff !important; }
+    .card { border: none; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+    form.d-inline { display: inline; }
+    .lang-switch { position: absolute; top: 10px; {{ 'left' if language == 'ar' else 'right' }}: 10px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container d-flex justify-content-center align-items-center position-relative">
+    <a class="navbar-brand" href="/">📦 {{ 'مفقوداتي' if language == 'ar' else 'Mafqodati' }}</a>
+    <div class="lang-switch">
+      <a href="/set_language/ar" class="btn btn-light btn-sm">العربية</a>
+      <a href="/set_language/en" class="btn btn-light btn-sm">English</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <h1 class="text-center text-success mb-4">{{ 'بلاغات قيد الانتظار' if language == 'ar' else 'Pending Reports' }}</h1>
+
+  <div class="card p-4">
+    {% if items %}
+    <ul class="list-group list-group-flush">
+      {% for item in items %}
+      <li class="list-group-item">
+        <h5>📦 {{ item['name'] }}</h5>
+        <p>📝 {{ item['description'] }}</p>
+        <small>📞 {{ item['contact'] }}</small><br><br>
+        <form method="POST" action="/approve/{{ item['id'] }}" class="d-inline">
+          <button type="submit" class="btn btn-success btn-sm">{{ 'قبول' if language == 'ar' else 'Approve' }}</button>
+        </form>
+        <form method="POST" action="/reject/{{ item['id'] }}" class="d-inline">
+          <button type="submit" class="btn btn-danger btn-sm">{{ 'رفض' if language == 'ar' else 'Reject' }}</button>
+        </form>
+        <form method="POST" action="/delete/{{ item['id'] }}" class="d-inline">
+          <button type="submit" class="btn btn-secondary btn-sm">{{ 'حذف' if language == 'ar' else 'Delete' }}</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-center text-muted">{{ 'لا توجد بلاغات قيد الانتظار.' if language == 'ar' else 'No pending reports.' }}</p>
+    {% endif %}
+  </div>
+</div>
+
+<script src="/static/chatbot.js"></script>
+</body>
+</html>
