@@ -3,15 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ 'مفقوداتي - لوحة تحكم الأدمن' if language == 'ar' else 'Mfaqodati - Admin Dashboard' }}</title>
+  <title>{{ 'مفقوداتي - لوحة تحكم الأدمن' if language == 'ar' else 'Mafqodati - Admin Dashboard' }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background-color: #f8f1e9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .navbar { background-color: #2e6048; position: relative; }
-    .navbar-brand { font-size: 24px; font-weight: bold; color: #fff !important; }
+    body { background-color: #fff2e2; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .navbar { background-color: #ffffff00; position: relative; }
+    .navbar-brand { font-size: 40px; font-weight: bold; color: #198754 !important; }
     .card { border: none; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
     form.d-inline { display: inline; }
-    .lang-switch { position: absolute; top: 10px; {{ 'left' if language == 'ar' else 'right' }}: 10px; }
+    .top-buttons { position: absolute; top: 10px; display: flex; gap: 8px; }
+    .language-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    #languageBtn {
+      background-color: #f8f1e9;
+      color: #000000a6;
+      border: none;
+      border-radius: 5px;
+      padding: 6px 12px;
+      font-size: 14px;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .language-menu {
+      position: absolute;
+      background-color: #f8f1e9;
+      border: 1px solid #ddd;
+      min-width: 140px;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+      z-index: 1000;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .language-menu a {
+      color: #000000a6;
+      padding: 10px 12px;
+      text-decoration: none;
+      display: block;
+      font-size: 14px;
+    }
+
+    .language-menu a:hover {
+      background-color: #fce8d2;
+    }
+    .delete-btn {
+      position: absolute;
+      top: 8px;
+      {{ 'left' if language == 'ar' else 'right' }}: 10px;
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      font-weight: bold;
+      color: red;
+      cursor: pointer;
+    
+    }
+
   </style>
 </head>
 <body>
@@ -19,9 +70,14 @@
 <nav class="navbar">
   <div class="container d-flex justify-content-center align-items-center position-relative">
     <a class="navbar-brand" href="/">📦 {{ 'مفقوداتي' if language == 'ar' else 'Mafqodati' }}</a>
-    <div class="lang-switch">
-      <a href="/set_language/ar" class="btn btn-light btn-sm">العربية</a>
-      <a href="/set_language/en" class="btn btn-light btn-sm">English</a>
+    <div class="top-buttons">
+      <div class="language-dropdown">
+        <button id="languageBtn" class="btn btn-light btn-sm">🌐 {{ 'اللغة' if language == 'ar' else 'Language' }}</button>
+        <div id="languageMenu" class="language-menu" style="display: none;">
+          <a href="/set_language/ar">العربية</a>
+          <a href="/set_language/en">English</a>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
@@ -29,32 +85,100 @@
 <div class="container py-5">
   <h1 class="text-center text-success mb-4">{{ 'بلاغات قيد الانتظار' if language == 'ar' else 'Pending Reports' }}</h1>
 
-  <div class="card p-4">
-    {% if items %}
-    <ul class="list-group list-group-flush">
-      {% for item in items %}
-      <li class="list-group-item">
-        <h5>📦 {{ item['name'] }}</h5>
-        <p>📝 {{ item['description'] }}</p>
-        <small>📞 {{ item['contact'] }}</small><br><br>
-        <form method="POST" action="/approve/{{ item['id'] }}" class="d-inline">
-          <button type="submit" class="btn btn-success btn-sm">{{ 'قبول' if language == 'ar' else 'Approve' }}</button>
-        </form>
-        <form method="POST" action="/reject/{{ item['id'] }}" class="d-inline">
-          <button type="submit" class="btn btn-danger btn-sm">{{ 'رفض' if language == 'ar' else 'Reject' }}</button>
-        </form>
-        <form method="POST" action="/delete/{{ item['id'] }}" class="d-inline">
-          <button type="submit" class="btn btn-secondary btn-sm">{{ 'حذف' if language == 'ar' else 'Delete' }}</button>
-        </form>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p class="text-center text-muted">{{ 'لا توجد بلاغات قيد الانتظار.' if language == 'ar' else 'No pending reports.' }}</p>
-    {% endif %}
+  <div class="container py-5">
+  <div class="row g-4">
+
+    <div class="col-md-6">
+      <div class="card p-4 h-100" style="min-height: 100%;">
+        <h4 class="text-success text-center mb-3">{{ 'بلاغات المفقودات' if language == 'ar' else 'Lost Item Reports' }}</h4>
+        {% if items %}
+        <ul class="list-group list-group-flush">
+          {% for item in items %}
+          <li class="list-group-item position-relative">
+            <form method="POST" action="/admin/delete_found/{{ item['id'] }}">
+              <button type="submit" class="delete-btn">×</button>
+            </form>
+            <h5>📦 {{ item['name'] }}</h5>
+            <p>📝 {{ item['description'] }}</p>
+            <p>📍 {{ item['lost_place'] }}</p>
+            <p>🕒 {{ item['lost_time'] }}</p>
+            <small>📞 {{ item['contact'] }}</small><br>
+            {% if item['image_path'] %}
+            <img src="/{{ item['image_path'] }}" alt="صورة" class="img-thumbnail my-2" style="max-width: 100%;">
+            {% endif %}
+            <br><br>
+            <form method="POST" action="/approve/{{ item['id'] }}" class="d-inline">
+              <button type="submit" class="btn btn-success btn-sm">{{ ' إتمام' if language == 'ar' else 'Approve' }}</button>
+            </form>
+            
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-center text-muted">{{ 'لا توجد بلاغات.' if language == 'ar' else 'No reports.' }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card p-4 h-100" style="min-height: 100%;">
+        <h4 class="text-primary text-center mb-3">{{ 'بلاغات العثور' if language == 'ar' else 'Found Item Reports' }}</h4>
+        {% if found_items %}
+        <ul class="list-group list-group-flush">
+          {% for item in found_items %}
+          <li class="list-group-item position-relative">
+            <form method="POST" action="/admin/delete_found/{{ item['id'] }}">
+              <button type="submit" class="delete-btn">×</button>
+            </form>
+            <h5>📦 {{ item['name'] }}</h5>
+            <p>📝 {{ item['description'] }}</p>
+            <p>📍 {{ item['found_place'] }}</p>
+            <p>🕒 {{ item['found_time'] }}</p>
+            <small>📞 {{ item['contact'] }}</small><br>
+            {% if item['image_path'] %}
+            <img src="/{{ item['image_path'] }}" alt="صورة" class="img-thumbnail my-2" style="max-width: 100%;">
+            {% endif %}
+            <br><br>
+           
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-center text-muted">{{ 'لا توجد بلاغات العثور.' if language == 'ar' else 'No found reports.' }}</p>
+        {% endif %}
+      </div>
+    </div>
+
   </div>
 </div>
 
-<script src="/static/chatbot.js"></script>
+<script>
+document.getElementById('languageBtn').addEventListener('click', function() {
+  const menu = document.getElementById('languageMenu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+});
+
+window.addEventListener('click', function(event) {
+  if (!event.target.matches('#languageBtn')) {
+    const menu = document.getElementById('languageMenu');
+    if (menu && menu.style.display === 'block') {
+      menu.style.display = 'none';
+    }
+  }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  const lang = document.documentElement.lang || 'ar';
+  const topButtons = document.querySelector('.top-buttons');
+  if (lang === 'ar') {
+    topButtons.style.left = '10px';
+    topButtons.style.right = 'unset';
+  } else {
+    topButtons.style.right = '10px';
+    topButtons.style.left = 'unset';
+  }
+});
+</script>
+
 </body>
 </html>

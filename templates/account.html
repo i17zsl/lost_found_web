@@ -3,23 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ 'مفقوداتي - حسابي' if language == 'ar' else 'Mfaqodati - My Account' }}</title>
+  <title>{{ 'مفقوداتي - حسابي' if language == 'ar' else 'Mafqodati - My Account' }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
-    body { background-color: #f8f1e9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .navbar { background-color: #2e6048; position: relative; }
-    .navbar-brand { font-size: 24px; font-weight: bold; color: #fff !important; }
-    .top-buttons { position: absolute; top: 10px; {{ 'left' if language == 'ar' else 'right' }}: 10px; display: flex; gap: 8px; }
-    .admin-button {
-      position: absolute;
-      top: 10px;
-      {{ 'right' if language == 'ar' else 'left' }}: 10px;
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+    background-color: #fff2e2;
     }
+    .navbar { background-color: #ffffff00; position: relative; }
+    .navbar-brand { font-size: 40px; font-weight: bold; color: #198754 !important; }
+    .top-buttons { position: absolute; top: 10px; display: flex; gap: 8px; }
+    .admin-button { position: absolute; top: 10px; }
     .card { border: none; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
-    .btn-logout { background-color: #dc3545; color: white; }
+    .btn-logout { background-color: #dc3545; color: white;}
+
     .delete-btn {
       position: absolute;
-      top: 10px;
+      top: 8px;
       {{ 'left' if language == 'ar' else 'right' }}: 10px;
       background: transparent;
       border: none;
@@ -27,15 +30,15 @@
       font-weight: bold;
       color: red;
       cursor: pointer;
+    
     }
     .report-item {
       position: relative;
-      padding-top: 30px;
+      padding: 40px 20px 20px 20px;
     }
     .chatbot-button {
       position: fixed;
       bottom: 20px;
-      {{ 'right' if language == 'ar' else 'left' }}: 20px;
       background-color: #2e6048;
       color: white;
       padding: 12px 16px;
@@ -51,20 +54,68 @@
       50% { transform: scale(1.1); }
       100% { transform: scale(1); }
     }
+
+    .language-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    #languageBtn {
+      background-color: #f8f1e9;
+      color: #000000a6;
+      border: none;
+      border-radius: 5px;
+      padding: 6px 12px;
+      font-size: 14px;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .language-menu {
+      position: absolute;
+      background-color: #f8f1e9;
+      border: 1px solid #ddd;
+      min-width: 140px;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+      z-index: 1000;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .language-menu a {
+      color: #000000a6;
+      padding: 10px 12px;
+      text-decoration: none;
+      display: block;
+      font-size: 14px;
+    }
+
+    .language-menu a:hover {
+      background-color: #fce8d2;
+    }
+
+
   </style>
 </head>
+
 <body>
 
 <nav class="navbar">
   <div class="container position-relative d-flex justify-content-center align-items-center">
-    <a class="navbar-brand" href="/">📦 {{ 'مفقوداتي' if language == 'ar' else 'Mfaqodati' }}</a>
+    <a class="navbar-brand" href="/">📦 {{ 'مفقوداتي' if language == 'ar' else 'Mafqodati' }}</a>
     <div class="top-buttons">
-      <a href="/set_language/ar" class="btn btn-light btn-sm">العربية</a>
-      <a href="/set_language/en" class="btn btn-light btn-sm">English</a>
-      <form method="POST" action="/logout" class="d-inline">
+      <div class="language-dropdown">
+        <button id="languageBtn" class="btn btn-light btn-sm">🌐 {{ 'اللغة' if language == 'ar' else 'Language' }}</button>
+        <div id="languageMenu" class="language-menu" style="display: none;">
+          <a href="/set_language/ar">العربية</a>
+          <a href="/set_language/en">English</a>
+        </div>
+      </div>
+      <form method="POST" action="/logout" class="d-inline ms-2">
         <button type="submit" class="btn btn-danger btn-sm">{{ 'خروج' if language == 'ar' else 'Logout' }}</button>
       </form>
     </div>
+
     {% if is_admin %}
     <div class="admin-button">
       <a href="/admin_dashboard" class="btn btn-warning btn-sm">{{ 'لوحة تحكم الأدمن' if language == 'ar' else 'Admin Dashboard' }}</a>
@@ -73,8 +124,12 @@
   </div>
 </nav>
 
+
+
+
 <div class="container py-5">
   <h1 class="text-center text-success mb-4">{{ 'مرحباً' if language == 'ar' else 'Welcome' }} {{ username }}</h1>
+<br>
 
   <div class="card p-4 mb-4">
     <h4 class="mb-3 text-center">{{ 'بلاغاتك:' if language == 'ar' else 'Your Reports:' }}</h4>
@@ -82,16 +137,20 @@
     <ul class="list-group list-group-flush">
       {% for item in items %}
       <li class="list-group-item report-item">
-        <form method="POST" action="/delete/{{ item['id'] }}">
+        <form method="POST" action="/user/delete/{{ item['id'] }}">
           <button type="submit" class="delete-btn">×</button>
-        </form>
-        <h5>📦 {{ item['name'] }}</h5>
-        <p>📝 {{ item['description'] }}</p>
+        </form>        
+        <h5>📦 {{ 'الاسم:' if language == 'ar' else 'Name:' }}  {{ item['name'] }}</h5>
+        <p>📝 {{ 'الوصف:' if language == 'ar' else 'Description:' }}  {{ item['description'] }}</p>
         <p>🕒 {{ 'وقت الفقدان:' if language == 'ar' else 'Lost Time:' }} {{ item['lost_time'] }}</p>
         <p>📍 {{ 'مكان الفقدان:' if language == 'ar' else 'Lost Place:' }} {{ item['lost_place'] }}</p>
-        <small>📞 {{ item['contact'] }}</small><br>        
+        <small>📞 {{ 'التواصل:' if language == 'ar' else 'Contact:' }} {{ item['contact'] }}</small>
+        {% if item['image_path'] %}
+        <img src="/{{ item['image_path'] }}" class="img-thumbnail my-2" style="max-width: 100%;">
+        {% endif %}
+        <br>        
         {% if item['is_approved'] == 1 %}
-          <span class="badge bg-success">{{ 'مقبول' if language == 'ar' else 'Approved' }}</span>
+          <span class="badge bg-success">{{ 'تم العثور' if language == 'ar' else 'Approved' }}</span>
         {% elif item['is_approved'] == 0 %}
           <span class="badge bg-warning text-dark">{{ 'قيد المراجعة' if language == 'ar' else 'Pending' }}</span>
         {% elif item['is_approved'] == -1 %}
@@ -108,10 +167,57 @@
   <div class="text-center">
     <a href="/report" class="btn btn-success">{{ 'إبلاغ عن غرض مفقود' if language == 'ar' else 'Report a Lost Item' }}</a>
   </div>
+</div> <div class="text-center mt-3">
+  <a href="/found_report" class="btn btn-warning">
+    {{ 'بلاغ العثور على غرض' if language == 'ar' else 'Report a Found Item' }}
+  </a>
 </div>
+<br> 
+<div class="alert alert-info text-center">
+  📝 {{ 'الرجاء التوجه إلى مكتب المفقودات في حال العثور على غرض, و في حال تقديم بلاغ عن فقدان شيء الرجاء الانتظار إلى أن يتم التواصل معك.' if language == 'ar' else 'Please go to the lost and found office if you find an item. If you report a lost item, please wait until you are contacted.' }}
+</div>
+<br> 
+<br> 
 
 <a href="/chatbot_page" class="chatbot-button" title="{{ 'تحدث مع البوت' if language == 'ar' else 'Chat with Bot' }}">🤖</a>
 
-<script src="/static/chatbot.js"></script>
+<script>
+document.getElementById('languageBtn').addEventListener('click', function() {
+  const menu = document.getElementById('languageMenu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+});
+
+window.addEventListener('click', function(event) {
+  if (!event.target.matches('#languageBtn')) {
+    const menu = document.getElementById('languageMenu');
+    if (menu && menu.style.display === 'block') {
+      menu.style.display = 'none';
+    }
+  }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  const lang = document.documentElement.lang || 'ar';
+  const topButtons = document.querySelector('.top-buttons');
+  const adminButton = document.querySelector('.admin-button');
+
+  if (lang === 'ar') {
+    topButtons.style.left = '10px';
+    topButtons.style.right = 'unset';
+    if (adminButton) {
+      adminButton.style.right = '10px';
+      adminButton.style.left = 'unset';
+    }
+  } else {
+    topButtons.style.right = '10px';
+    topButtons.style.left = 'unset';
+    if (adminButton) {
+      adminButton.style.left = '10px';
+      adminButton.style.right = 'unset';
+    }
+  }
+});
+</script>
+
 </body>
 </html>

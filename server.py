@@ -1,9 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import hashlib
-
+from werkzeug.utils import secure_filename
+import os
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
+
+UPLOAD_FOLDER = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -82,9 +89,11 @@ def admin_dashboard():
     if not session.get('is_admin'):
         return redirect(url_for('account'))
     conn = get_db_connection()
-    items = conn.execute('SELECT * FROM items WHERE is_approved = 0').fetchall()
+    lost_items = conn.execute('SELECT * FROM items WHERE is_approved = 0').fetchall()
+    found_items = conn.execute('SELECT * FROM found_items WHERE is_approved = 0').fetchall()
     conn.close()
-    return render_template('admin_dashboard.html', items=items, language=session.get('language', 'ar'))
+    return render_template('admin_dashboard.html', items=lost_items, found_items=found_items, language=session.get('language', 'ar'))
+
 
 @app.route('/approve/<int:item_id>', methods=['POST'])
 def approve_item(item_id):
@@ -110,71 +119,91 @@ def reject_item(item_id):
 def report():
     if 'username' not in session:
         return redirect('/login')
-
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
         contact = request.form['contact']
         lost_time = request.form['lost_time']
         lost_place = request.form['lost_place']
+        image = request.files.get('image')
+        image_path = None
+        if image and image.filename:
+            filename = secure_filename(image.filename)
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
         username = session['username']
-
         conn = sqlite3.connect('lost_found.db')
         c = conn.cursor()
-        c.execute('INSERT INTO items (name, description, contact, lost_time, lost_place, username) VALUES (?, ?, ?, ?, ?, ?)',
-                  (name, description, contact, lost_time, lost_place, username))
+        c.execute('''
+            INSERT INTO items (name, description, contact, lost_time, lost_place, image_path, username)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (name, description, contact, lost_time, lost_place, image_path, username))
         conn.commit()
         conn.close()
         return redirect('/account')
-
     return render_template('report.html', language=session.get('language', 'ar'))
 
-@app.route('/search_report', methods=['GET', 'POST'])
-def search_report():
-    result = None
-    if request.method == 'POST':
-        item_id = request.form['item_id']
-        conn = get_db_connection()
-        item = conn.execute('SELECT * FROM items WHERE id = ? AND user_id = ?', (item_id, session.get('user_id'))).fetchone()
-        conn.close()
-        if item:
-            if item['is_approved'] == 1:
-                result = "✅ تم قبول البلاغ"
-            elif item['is_approved'] == 0:
-                result = "🕒 البلاغ قيد المراجعة"
-            elif item['is_approved'] == -1:
-                result = "❌ تم رفض البلاغ"
-        else:
-            result = "❌ لا يوجد بلاغ بهذا الرقم خاص بك."
-    return render_template('search_report.html', result=result, language=session.get('language', 'ar'))
-
-@app.route('/delete/<int:item_id>', methods=['POST'])
-def delete_item(item_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
+@app.route('/user/delete/<int:item_id>', methods=['POST'])
+def user_delete_lost_item(item_id):
     conn = get_db_connection()
-    item = conn.execute('SELECT * FROM items WHERE id = ?', (item_id,)).fetchone()
-
-    if not item:
-        conn.close()
-        return redirect(url_for('account'))
-
-    if session.get('is_admin') or item['user_id'] == session['user_id']:
-        conn.execute('DELETE FROM items WHERE id = ?', (item_id,))
-        conn.commit()
-
+    conn.execute('DELETE FROM items WHERE id = ?', (item_id,))
+    conn.commit()
     conn.close()
-    if session.get('is_admin'):
-        return redirect(url_for('admin_dashboard'))
-    else:
-        return redirect(url_for('account'))
+    return redirect(url_for('account'))
+
+
+@app.route('/admin/delete/<int:item_id>', methods=['POST'])
+def admin_delete_lost_item(item_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('login'))
+    conn = get_db_connection()
+    conn.execute('DELETE FROM items WHERE id = ?', (item_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('account'))
+
+@app.route('/admin/delete_found/<int:item_id>', methods=['POST'])
+def admin_delete_found_item(item_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('login'))
+    conn = get_db_connection()
+    conn.execute('DELETE FROM found_items WHERE id = ?', (item_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('admin_dashboard'))
+
+
 
 @app.route('/chatbot_page')
 def chatbot_page():
     return render_template('chatbot_page.html', language=session.get('language', 'ar'))
 
+@app.route('/found_report', methods=['GET', 'POST'])
+def found_report():
+    if 'username' not in session:
+        return redirect('/login')
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        contact = request.form['contact']
+        found_time = request.form['found_time']
+        found_place = request.form['found_place']
+        image = request.files.get('image')
+        image_path = None
+        if image and image.filename:
+            filename = secure_filename(image.filename)
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
+        username = session['username']
+        conn = get_db_connection()
+        conn.execute('INSERT INTO found_items (name, description, contact, found_time, found_place, image_path, username) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                     (name, description, contact, found_time, found_place, image_path, username))
+        conn.commit()
+        conn.close()
+        return redirect('/account')
+    return render_template('found_report.html', language=session.get('language', 'ar'))
 
-if __name__ == "__main__":
-    app.run()
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
 

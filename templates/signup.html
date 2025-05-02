@@ -3,31 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ 'مفقوداتي - إنشاء حساب' if language == 'ar' else 'Mfaqodati - Signup' }}</title>
+  <title>{{ 'مفقوداتي - إنشاء حساب' if language == 'ar' else 'Mafqodati - Signup' }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background-color: #f8f1e9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .navbar { background-color: #2e6048; position: relative; }
-    .navbar-brand { font-size: 24px; font-weight: bold; color: #fff !important; }
-    .card { border: none; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); max-width: 500px; margin: auto; }
-    .lang-switch { position: absolute; top: 10px; {{ 'left' if language == 'ar' else 'right' }}: 10px; }
+    body { background-color: #fff2e2; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .navbar { background-color: #ffffff00; position: relative; }
+    .navbar-brand { font-size: 40px; font-weight: bold; color: #198754 !important; }
+    .card { border: none; background-color: #f8f1e9; box-shadow: 10px 10px 10px #00000014; width: 500px;  height: 500px ; margin:auto; }
+    .top-buttons { position: absolute; top: 10px; display: flex; gap: 8px; }
+    .language-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    #languageBtn {
+      background-color: #f8f1e9;
+      color: #000000a6;
+      border: none;
+      border-radius: 5px;
+      padding: 6px 12px;
+      font-size: 14px;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .language-menu {
+      position: absolute;
+      background-color: #f8f1e9;
+      border: 1px solid #ddd;
+      min-width: 140px;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+      z-index: 1000;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .language-menu a {
+      color: #000000a6;
+      padding: 10px 12px;
+      text-decoration: none;
+      display: block;
+      font-size: 14px;
+    }
+
+    .language-menu a:hover {
+      background-color: #fce8d2;
+    }
+    .form-control{
+
+background-color: #f8f1e9;
+height: 50px ;
+border-radius: 15px;
+border-color: #1987546c;
+}
   </style>
 </head>
 <body>
 
 <nav class="navbar">
   <div class="container d-flex justify-content-center align-items-center position-relative">
-    <a class="navbar-brand" href="/">📦 {{ 'مفقوداتي' if language == 'ar' else 'Mfaqodati' }}</a>
-    <div class="lang-switch">
-      <a href="/set_language/ar" class="btn btn-light btn-sm">العربية</a>
-      <a href="/set_language/en" class="btn btn-light btn-sm">English</a>
+    <a class="navbar-brand" href="/">📦 {{ 'مفقوداتي' if language == 'ar' else 'Mafqodati' }}</a>
+    <div class="top-buttons">
+      <div class="language-dropdown">
+        <button id="languageBtn" class="btn btn-light btn-sm">🌐 {{ 'اللغة' if language == 'ar' else 'Language' }}</button>
+        <div id="languageMenu" class="language-menu" style="display: none;">
+          <a href="/set_language/ar">العربية</a>
+          <a href="/set_language/en">English</a>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
 
 <div class="container py-5">
-  <h1 class="text-center text-success mb-4">{{ 'إنشاء حساب' if language == 'ar' else 'Create Account' }}</h1>
-
+ 
   {% if error %}
   <div class="alert alert-danger text-center">{{ error }}</div>
   {% endif %}
@@ -35,13 +84,18 @@
   <div class="card p-4">
     <form method="POST">
       <div class="mb-3">
-        <label class="form-label">{{ 'اسم المستخدم' if language == 'ar' else 'Username' }}</label>
-        <input type="text" name="username" class="form-control" required>
+        <br>
+        <h1 class="text-center text-success mb-4">{{ 'إنشاء حساب' if language == 'ar' else 'Create Account' }}</h1>
+        <br>
+        <br>
+
+        <input type="text" name="username" class="form-control" required placeholder="{{ 'اسم المستخدم' if language == 'ar' else 'Username' }}">
       </div>
+      <br>
       <div class="mb-3">
-        <label class="form-label">{{ 'كلمة المرور' if language == 'ar' else 'Password' }}</label>
-        <input type="password" name="password" class="form-control" required>
+        <input type="password" name="password" class="form-control" required placeholder="{{ 'كلمة المرور' if language == 'ar' else 'Password' }}">
       </div>
+      <br>
       <button type="submit" class="btn btn-success w-100">{{ 'إنشاء الحساب' if language == 'ar' else 'Create Account' }}</button>
       <div class="text-center mt-3">
         <a href="/login">{{ 'لديك حساب؟ تسجيل الدخول' if language == 'ar' else 'Already have an account? Login' }}</a>
@@ -50,6 +104,33 @@
   </div>
 </div>
 
-<script src="/static/chatbot.js"></script>
+<script>
+document.getElementById('languageBtn').addEventListener('click', function() {
+  const menu = document.getElementById('languageMenu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+});
+
+window.addEventListener('click', function(event) {
+  if (!event.target.matches('#languageBtn')) {
+    const menu = document.getElementById('languageMenu');
+    if (menu && menu.style.display === 'block') {
+      menu.style.display = 'none';
+    }
+  }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  const lang = document.documentElement.lang || 'ar';
+  const topButtons = document.querySelector('.top-buttons');
+  if (lang === 'ar') {
+    topButtons.style.left = '10px';
+    topButtons.style.right = 'unset';
+  } else {
+    topButtons.style.right = '10px';
+    topButtons.style.left = 'unset';
+  }
+});
+</script>
+
 </body>
 </html>
